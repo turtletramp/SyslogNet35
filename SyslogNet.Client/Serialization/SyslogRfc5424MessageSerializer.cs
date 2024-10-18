@@ -42,16 +42,16 @@ namespace SyslogNet.Client.Serialization
                 // Structured data
                 foreach (StructuredDataElement sdElement in structuredData)
 				{
-					messageBuilder.Clear()
-						.Append("[")
+					messageBuilder = new StringBuilder();
+                    messageBuilder.Append("[")
 						.Append(sdElement.SdId.FormatSyslogSdnameField(asciiCharsBuffer));
 
 					writeStream(stream, Encoding.ASCII, messageBuilder.ToString());
 
 					foreach(System.Collections.Generic.KeyValuePair<string, string> sdParam in sdElement.Parameters)
 					{
-						messageBuilder.Clear()
-							.Append(" ")
+						messageBuilder = new StringBuilder();
+						messageBuilder.Append(" ")
 							.Append(sdParam.Key.FormatSyslogSdnameField(asciiCharsBuffer))
 							.Append("=")
 							.Append("\"")
@@ -79,7 +79,7 @@ namespace SyslogNet.Client.Serialization
 				writeStream(stream, Encoding.ASCII, NilValue);
 			}
 
-			if (!String.IsNullOrWhiteSpace(message.Message))
+			if (!StringExtensions.IsNullOrWhiteSpace(message.Message))
 			{
 				// Space
 				stream.WriteByte(32);
@@ -98,21 +98,29 @@ namespace SyslogNet.Client.Serialization
 
 	internal static class StringExtensions
 	{
+		public static bool IsNullOrWhiteSpace(string s)
+		{
+			if (String.IsNullOrEmpty(s))
+                return true;
+
+			return s.Trim().Length == 0;
+		}
+
 		public static string IfNotNullOrWhitespace(this string s, Func<string, string> action)
 		{
-			return String.IsNullOrWhiteSpace(s) ? s : action(s);
+			return IsNullOrWhiteSpace(s) ? s : action(s);
 		}
 
 		public static string FormatSyslogField(this string s, string replacementValue, int? maxLength = null)
 		{
-			return String.IsNullOrWhiteSpace(s)
+			return IsNullOrWhiteSpace(s)
 				? replacementValue
 				: maxLength.HasValue ? EnsureMaxLength(s, maxLength.Value) : s;
 		}
 
 		public static string EnsureMaxLength(this string s, int maxLength)
 		{
-			return String.IsNullOrWhiteSpace(s)
+			return IsNullOrWhiteSpace(s)
 				? s
 				: s.Length > maxLength ? s.Substring(0, maxLength) : s;
 		}
